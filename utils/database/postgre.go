@@ -4,6 +4,8 @@ import (
 	"email_verifier/config"
 	"fmt"
 
+	ur "email_verifier/features/user/repository"
+
 	"github.com/labstack/gommon/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -27,5 +29,5 @@ func InitDB(c *config.AppConfig) *gorm.DB {
 }
 
 func MigrateDB(db *gorm.DB) {
-
+	db.AutoMigrate(&ur.User{})
 }
