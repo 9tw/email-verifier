@@ -23,11 +23,13 @@ type UserCore struct {
 type Repository interface {
 	AddUser(newUser UserCore) (UserCore, error)
 	GetUser(existUser UserCore) (UserCore, error)
-	GetAll() ([]UserCore, error)
+	GetSpesific(userID uint) (UserCore, error)
+	PutActive(updatedUser UserCore, userID uint) (UserCore, error)
 }
 
 type Service interface {
 	Register(newUser UserCore) (UserCore, error)
 	Login(existUser UserCore) (UserCore, error)
-	All() ([]UserCore, error)
+	My(userID uint) (UserCore, error)
+	Actived(updatedUser UserCore, userID uint) (UserCore, error)
 }

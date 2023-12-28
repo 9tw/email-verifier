@@ -35,13 +35,23 @@ func (rq *repoQuery) GetUser(existUser domain.UserCore) (domain.UserCore, error)
 	return res, nil
 }
 
-func (rq *repoQuery) GetAll() ([]domain.UserCore, error) {
-	var resQry []User
+func (rq *repoQuery) GetSpesific(userID uint) (domain.UserCore, error) {
+	var resQuery User
+	if err := rq.db.First(&resQuery, "id = ?", userID).Error; err != nil {
+		log.Error("error on get my user", err.Error())
+		return domain.UserCore{}, err
+	}
+	res := ToDomain(resQuery)
+	return res, nil
+}
 
-	if err := rq.db.Find(&resQry).Error; err != nil {
-		return nil, err
+func (rq *repoQuery) PutActive(updatedUser domain.UserCore, userID uint) (domain.UserCore, error) {
+	var cnv User = FromDomain(updatedUser)
+	if err := rq.db.Table("users").Where("id = ?", userID).Updates(&cnv).Error; err != nil {
+		log.Error("error on updating user", err.Error())
+		return domain.UserCore{}, err
 	}
 
-	res := ToDomainArray(resQry)
+	res := ToDomain(cnv)
 	return res, nil
 }

@@ -9,16 +9,18 @@ import (
 
 type User struct {
 	gorm.Model
-	FullName  string
-	Username  string
-	Password  string
-	AppId     uint
-	RoleId    uint
-	UserType  string
-	LastLogin time.Time
-	CreatedBy int
-	UpdatedBy int
-	Status    string
+	FullName          string
+	Username          string
+	Password          string
+	AppId             uint
+	RoleId            uint
+	UserType          string
+	LastLogin         time.Time
+	CreatedBy         int
+	UpdatedBy         int
+	Status            string
+	EmailVerification string
+	Timeout           string
 }
 
 func FromDomain(du domain.UserCore) User {
@@ -48,7 +50,14 @@ func ToDomain(u User) domain.UserCore {
 func ToDomainArray(au []User) []domain.UserCore {
 	var res []domain.UserCore
 	for _, val := range au {
-		res = append(res, domain.UserCore{Model: gorm.Model{ID: val.ID}, FullName: val.FullName, Username: val.Username, AppId: val.AppId, RoleId: val.RoleId, Status: val.Status})
+		res = append(res, domain.UserCore{
+			Model:    gorm.Model{ID: val.ID},
+			FullName: val.FullName,
+			Username: val.Username,
+			AppId:    val.AppId,
+			RoleId:   val.RoleId,
+			Status:   val.Status,
+		})
 	}
 
 	return res

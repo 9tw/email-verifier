@@ -24,6 +24,7 @@ func (us *userService) Register(newUser domain.UserCore) (domain.UserCore, error
 		return domain.UserCore{}, errors.New("cannot encrypt password")
 	}
 	newUser.Password = string(generate)
+	newUser.Status = "0"
 
 	res, err := us.qry.AddUser(newUser)
 	if err != nil {
@@ -53,21 +54,27 @@ func (us *userService) Login(existUser domain.UserCore) (domain.UserCore, error)
 	return res, nil
 }
 
-func (us *userService) All() ([]domain.UserCore, error) {
-	res, err := us.qry.GetAll()
-
+func (us *userService) My(userID uint) (domain.UserCore, error) {
+	res, err := us.qry.GetSpesific(userID)
 	if err != nil {
-		log.Error(err.Error())
 		if strings.Contains(err.Error(), "table") {
-			return nil, errors.New("Database Error")
+			return domain.UserCore{}, errors.New("database error")
 		} else if strings.Contains(err.Error(), "found") {
-			return nil, errors.New("No Data")
+			return domain.UserCore{}, errors.New("no data")
 		}
 	}
+	return res, nil
+}
 
-	if len(res) == 0 {
-		log.Info("No Data")
-		return nil, errors.New("No Data")
+func (us *userService) Actived(updatedUser domain.UserCore, userID uint) (domain.UserCore, error) {
+	updatedUser.Status = "1"
+	res, err := us.qry.PutActive(updatedUser, userID)
+	if err != nil {
+		if strings.Contains(err.Error(), "column") {
+			return domain.UserCore{}, errors.New("rejected from database")
+		}
+		return domain.UserCore{}, errors.New("some problem on database")
 	}
+
 	return res, nil
 }

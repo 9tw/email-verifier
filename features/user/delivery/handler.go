@@ -18,7 +18,7 @@ func New(e *echo.Echo, srv domain.Service) {
 	handler := userHandler{srv: srv}
 	e.POST("/register", handler.Register())
 	e.POST("/login", handler.Login())
-	e.GET("/users", handler.AllAccounts(), middleware.JWT([]byte(config.JwtKey)))
+	e.GET("/user", handler.MyProfile(), middleware.JWT([]byte(config.JwtKey)))
 }
 
 func (uh *userHandler) Register() echo.HandlerFunc {
@@ -57,13 +57,17 @@ func (uh *userHandler) Login() echo.HandlerFunc {
 	}
 }
 
-func (uh *userHandler) AllAccounts() echo.HandlerFunc {
+func (uh *userHandler) MyProfile() echo.HandlerFunc {
 	return func(c echo.Context) error {
-		res, err := uh.srv.All()
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, FailResponse(err.Error()))
+		userID := common.ExtractToken(c)
+		if userID == 0 {
+			return c.JSON(http.StatusUnauthorized, FailResponse("ID doesn't exists."))
+		} else {
+			res, err := uh.srv.My(uint(userID))
+			if err != nil {
+				return c.JSON(http.StatusInternalServerError, FailResponse(err.Error()))
+			}
+			return c.JSON(http.StatusOK, SuccessResponse("Success get my profile.", ToResponse(res, "user")))
 		}
-
-		return c.JSON(http.StatusOK, SuccessResponse("Success get all accounts.", ToResponse(res, "all")))
 	}
 }
