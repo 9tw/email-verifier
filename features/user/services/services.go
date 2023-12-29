@@ -108,9 +108,9 @@ func (us *userService) My(userID uint) (domain.UserCore, error) {
 	return res, nil
 }
 
-func (us *userService) Actived(updatedUser domain.UserCore, userID uint) (domain.UserCore, error) {
+func (us *userService) Actived(updatedUser domain.UserCore, user string) (domain.UserCore, error) {
 	updatedUser.Status = "1"
-	res, err := us.qry.PutActive(updatedUser, userID)
+	res, err := us.qry.PutActive(updatedUser, user)
 	if err != nil {
 		if strings.Contains(err.Error(), "column") {
 			return domain.UserCore{}, errors.New("rejected from database")
