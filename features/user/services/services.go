@@ -1,6 +1,7 @@
 package services
 
 import (
+	"email_verifier/config"
 	"email_verifier/features/user/domain"
 	"errors"
 	"fmt"
@@ -51,7 +52,7 @@ func (us *userService) Register(newUser domain.UserCore) (domain.UserCore, error
 	newUser.EmailVerification = string(emailVerPWhash)
 	// create u.timeout after 48 hours
 	newUser.Timeout = time.Now().Local().AddDate(0, 0, 2)
-	fmt.Println("u.timeout:", newUser.Timeout)
+	fmt.Println("timeout:", newUser.Timeout)
 
 	res, err := us.qry.AddUser(newUser)
 	if err != nil {
@@ -59,6 +60,20 @@ func (us *userService) Register(newUser domain.UserCore) (domain.UserCore, error
 			return domain.UserCore{}, errors.New("rejected from database")
 		}
 		return domain.UserCore{}, errors.New("some problem on database")
+	}
+	subject := "Email Verificaion"
+	HTMLbody :=
+		`<html>
+			<h1>Click Link to Veify Email</h1>
+			<a href="http://localhost:8000/emailver/` + newUser.Username + `/` + emailVerPassword + `">click to verify email</a>
+		</html>`
+	fmt.Println(HTMLbody)
+	err = config.SendEmail(subject, HTMLbody, newUser)
+	if err != nil {
+		if strings.Contains(err.Error(), "error") {
+			return domain.UserCore{}, errors.New("can't send email")
+		}
+		return domain.UserCore{}, errors.New("some problem on sending email")
 	}
 	return res, nil
 }
