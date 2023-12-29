@@ -3,7 +3,10 @@ package services
 import (
 	"email_verifier/features/user/domain"
 	"errors"
+	"fmt"
+	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/bcrypt"
@@ -25,6 +28,30 @@ func (us *userService) Register(newUser domain.UserCore) (domain.UserCore, error
 	}
 	newUser.Password = string(generate)
 	newUser.Status = "0"
+
+	// create random code for email
+	// Go rune data type represent Unicode characters
+	var alphaNumRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890")
+	emailVerRandRune := make([]rune, 64)
+	// creat a random slice of runes (characters) to create our emailVerPassword (random string of characters)
+	for i := 0; i < 64; i++ {
+		emailVerRandRune[i] = alphaNumRunes[rand.Intn(len(alphaNumRunes)-1)]
+	}
+	fmt.Println("emailVerRandRune:", emailVerRandRune)
+	emailVerPassword := string(emailVerRandRune)
+	fmt.Println("emailVerPassword:", emailVerPassword)
+	var emailVerPWhash []byte
+	// func GenerateFromPassword(password []byte, cost int) ([]byte, error)
+	emailVerPWhash, err = bcrypt.GenerateFromPassword([]byte(emailVerPassword), bcrypt.DefaultCost)
+	if err != nil {
+		fmt.Println("bcrypt err:", err.Error())
+		return domain.UserCore{}, errors.New("cannot encrypt email verifier")
+	}
+	fmt.Println("emailVerPWhash:", emailVerPWhash)
+	newUser.EmailVerification = string(emailVerPWhash)
+	// create u.timeout after 48 hours
+	newUser.Timeout = time.Now().Local().AddDate(0, 0, 2)
+	fmt.Println("u.timeout:", newUser.Timeout)
 
 	res, err := us.qry.AddUser(newUser)
 	if err != nil {

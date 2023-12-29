@@ -8,16 +8,18 @@ import (
 
 type UserCore struct {
 	gorm.Model
-	FullName  string
-	Username  string
-	Password  string
-	AppId     uint
-	RoleId    uint
-	UserType  string
-	LastLogin time.Time
-	CreatedBy int
-	UpdatedBy int
-	Status    string
+	FullName          string
+	Username          string
+	Password          string
+	AppId             uint
+	RoleId            uint
+	UserType          string
+	LastLogin         time.Time
+	CreatedBy         int
+	UpdatedBy         int
+	Status            string
+	EmailVerification string
+	Timeout           time.Time
 }
 
 type Repository interface {

@@ -20,7 +20,7 @@ type User struct {
 	UpdatedBy         int
 	Status            string
 	EmailVerification string
-	Timeout           string
+	Timeout           time.Time
 }
 
 func FromDomain(du domain.UserCore) User {
