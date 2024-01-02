@@ -25,25 +25,29 @@ type User struct {
 
 func FromDomain(du domain.UserCore) User {
 	return User{
-		Model:    gorm.Model{ID: du.ID},
-		FullName: du.FullName,
-		Username: du.Username,
-		Password: du.Password,
-		AppId:    du.AppId,
-		RoleId:   du.RoleId,
-		Status:   du.Status,
+		Model:             gorm.Model{ID: du.ID},
+		FullName:          du.FullName,
+		Username:          du.Username,
+		Password:          du.Password,
+		AppId:             du.AppId,
+		RoleId:            du.RoleId,
+		Status:            du.Status,
+		EmailVerification: du.EmailVerification,
+		Timeout:           du.Timeout,
 	}
 }
 
 func ToDomain(u User) domain.UserCore {
 	return domain.UserCore{
-		Model:    gorm.Model{ID: u.ID},
-		FullName: u.FullName,
-		Username: u.Username,
-		Password: u.Password,
-		AppId:    u.AppId,
-		RoleId:   u.RoleId,
-		Status:   u.Status,
+		Model:             gorm.Model{ID: u.ID},
+		FullName:          u.FullName,
+		Username:          u.Username,
+		Password:          u.Password,
+		AppId:             u.AppId,
+		RoleId:            u.RoleId,
+		Status:            u.Status,
+		EmailVerification: u.EmailVerification,
+		Timeout:           u.Timeout,
 	}
 }
 
