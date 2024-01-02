@@ -1,17 +1,44 @@
 package services
 
 import (
+	"bufio"
 	"email_verifier/config"
 	"email_verifier/features/user/domain"
 	"errors"
 	"fmt"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 
+	emailverifier "github.com/AfterShip/email-verifier"
 	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/bcrypt"
 )
+
+var (
+	verifier = emailverifier.NewVerifier()
+)
+
+func init() {
+	verifier = verifier.EnableDomainSuggest()
+
+	dispEmailsDomains := MustDispEmailDom()
+	verifier = verifier.AddDisposableDomains(dispEmailsDomains)
+}
+
+func MustDispEmailDom() (dispEmailDomains []string) {
+	file, err := os.Open("./disposable_email_blocklist.txt")
+	if err != nil {
+		log.Panic(err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		dispEmailDomains = append(dispEmailDomains, scanner.Text())
+	}
+	return dispEmailDomains
+}
 
 type userService struct {
 	qry domain.Repository

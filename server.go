@@ -7,13 +7,8 @@ import (
 	us "email_verifier/features/user/services"
 	"email_verifier/utils/database"
 
-	emailverifier "github.com/AfterShip/email-verifier"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-)
-
-var (
-	verifier = emailverifier.NewVerifier()
 )
 
 func main() {
