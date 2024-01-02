@@ -10,11 +10,15 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode"
 
 	emailverifier "github.com/AfterShip/email-verifier"
 	"github.com/labstack/gommon/log"
+	passwordvalidator "github.com/wagslane/go-password-validator"
 	"golang.org/x/crypto/bcrypt"
 )
+
+const minEntropyBits = 60
 
 var (
 	verifier = emailverifier.NewVerifier()
@@ -22,7 +26,6 @@ var (
 
 func init() {
 	verifier = verifier.EnableDomainSuggest()
-
 	dispEmailsDomains := MustDispEmailDom()
 	verifier = verifier.AddDisposableDomains(dispEmailsDomains)
 }
@@ -49,12 +52,65 @@ func New(repo domain.Repository) domain.Service {
 }
 
 func (us *userService) Register(newUser domain.UserCore) (domain.UserCore, error) {
+	// check username for only alphaNumeric characters
+	for _, char := range newUser.FullName {
+		if !unicode.IsLetter(char) && !unicode.IsNumber(char) {
+			return domain.UserCore{}, errors.New("only alphanumeric characters allowed for username")
+		}
+	}
+
+	// check username length
+	if 5 >= len(newUser.FullName) && len(newUser.FullName) >= 50 {
+		return domain.UserCore{}, errors.New("username length must be greater than 4 and less than 51 characters")
+	}
+
+	err := passwordvalidator.Validate(newUser.Password, minEntropyBits)
+	if err != nil {
+		return domain.UserCore{}, err
+	}
+
+	_, err = us.qry.GetUserWithUsername(newUser.Username)
+	if err != nil {
+		return domain.UserCore{}, errors.New("Username already exists")
+	}
+
+	mail, err := verifier.Verify(newUser.Username)
+	if err != nil {
+		return domain.UserCore{}, err
+	}
+
+	// check syntax, needs @ and . for starters
+	if !mail.Syntax.Valid {
+		return domain.UserCore{}, errors.New("Email address syntax is invalid")
+	}
+
+	// check if disposable
+	if mail.Disposable {
+		return domain.UserCore{}, errors.New("We do not accept disposable email addresses")
+	}
+
+	// check if there is domain Suggestion
+	if mail.Suggestion != "" {
+		return domain.UserCore{}, errors.New("Email address is not reachable")
+	}
+
+	// possible return string values: yes, no, unkown
+	if mail.Reachable == "no" {
+		return domain.UserCore{}, errors.New("Email address is not reachable")
+	}
+
+	// check MX records so we know DNS setup properly to recieve emails
+	if !mail.HasMxRecords {
+		return domain.UserCore{}, errors.New("Domain entered not properly setup to recieve emails, MX record not found")
+	}
+
 	generate, err := bcrypt.GenerateFromPassword([]byte(newUser.Password), bcrypt.DefaultCost)
 	if err != nil {
 		log.Error("error on bcrypt", err.Error())
 		return domain.UserCore{}, errors.New("cannot encrypt password")
 	}
 	newUser.Password = string(generate)
+
 	newUser.Status = "0"
 
 	// create random code for email
@@ -66,8 +122,10 @@ func (us *userService) Register(newUser domain.UserCore) (domain.UserCore, error
 		emailVerRandRune[i] = alphaNumRunes[rand.Intn(len(alphaNumRunes)-1)]
 	}
 	fmt.Println("emailVerRandRune:", emailVerRandRune)
+
 	emailVerPassword := string(emailVerRandRune)
 	fmt.Println("emailVerPassword:", emailVerPassword)
+
 	var emailVerPWhash []byte
 	// func GenerateFromPassword(password []byte, cost int) ([]byte, error)
 	emailVerPWhash, err = bcrypt.GenerateFromPassword([]byte(emailVerPassword), bcrypt.DefaultCost)
@@ -77,6 +135,7 @@ func (us *userService) Register(newUser domain.UserCore) (domain.UserCore, error
 	}
 	fmt.Println("emailVerPWhash:", emailVerPWhash)
 	newUser.EmailVerification = string(emailVerPWhash)
+
 	// create u.timeout after 48 hours
 	newUser.Timeout = time.Now().Local().AddDate(0, 0, 2)
 	fmt.Println("timeout:", newUser.Timeout)

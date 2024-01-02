@@ -26,6 +26,7 @@ type Repository interface {
 	AddUser(newUser UserCore) (UserCore, error)
 	GetUser(existUser UserCore) (UserCore, error)
 	GetSpesific(userID uint) (UserCore, error)
+	GetUserWithUsername(username string) (UserCore, error)
 	PutActive(updatedUser UserCore, user string) (UserCore, error)
 }
 

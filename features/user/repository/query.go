@@ -45,6 +45,16 @@ func (rq *repoQuery) GetSpesific(userID uint) (domain.UserCore, error) {
 	return res, nil
 }
 
+func (rq *repoQuery) GetUserWithUsername(username string) (domain.UserCore, error) {
+	var resQuery User
+	if err := rq.db.First(&resQuery, "username = ?", username).Error; err != nil {
+		log.Error("error on get my user", err.Error())
+		return domain.UserCore{}, err
+	}
+	res := ToDomain(resQuery)
+	return res, nil
+}
+
 func (rq *repoQuery) PutActive(updatedUser domain.UserCore, user string) (domain.UserCore, error) {
 	var cnv User = FromDomain(updatedUser)
 	if err := rq.db.Table("users").Where("username = ?", user).Updates(&cnv).Error; err != nil {
